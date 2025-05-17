@@ -16,14 +16,17 @@ export const getMahasiswa = async (divisi) => {
     }
 };
 
-export const createMahasiswa = async (data) => {
+export const createMahasiswa = async (data, method = "POST", url = "/mahasiswa") => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/mahasiswa`, data, {
+        const response = await axios({
+            method,
+            url: `${API_BASE_URL}${url}`,
+            data,
             headers: {
                 'Content-Type': 'application/json'
             },
             validateStatus: function (status) {
-                return status < 500; // Reject only if status is 500 or above
+                return status < 500;
             }
         });
 
@@ -33,10 +36,15 @@ export const createMahasiswa = async (data) => {
 
         return response.data;
     } catch (error) {
-        console.error('Error creating mahasiswa:', error);
+        console.error('Error creating/updating mahasiswa:', error);
         throw error;
     }
 };
+
+export const deleteMahasiswa = async (id) => {
+    return await axios.delete(`${API_BASE_URL}/mahasiswa/${id}`);
+};
+
 
 export const getEvents = async () => {
     try {
@@ -54,13 +62,34 @@ export const getEvents = async () => {
     }
 };
 
+// api.js
 export const createEvent = async (eventData) => {
+    const response = await axios.post(`${API_BASE_URL}/event`, eventData);
+    return response.data; // Pastikan mengandung _id
+};
+
+export const updateEvent = async (id, eventData) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/event`, eventData);
-        console.log('Event created:', response.data); // Debug log
-        return response.data; // Pastikan backend mengembalikan data event yang baru dibuat
+        const response = await axios.put(`${API_BASE_URL}/event/${id}`, eventData);
+        return {
+            _id: id,
+            judul: response.data.judul || eventData.judul,
+            deskripsi: response.data.deskripsi || eventData.deskripsi,
+            lokasi: response.data.lokasi || eventData.lokasi,
+            tanggal: response.data.tanggal || eventData.tanggal,
+        };
     } catch (error) {
-        console.error('Error creating event:', error.response || error);
+        console.error('Error updating event:', error);
+        throw error;
+    }
+};
+
+export const deleteEvent = async (id) => {
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/event/${id}`);
+        return response.data; // Pastikan mengembalikan konfirmasi sukses
+    } catch (error) {
+        console.error('Error deleting event:', error);
         throw error;
     }
 };

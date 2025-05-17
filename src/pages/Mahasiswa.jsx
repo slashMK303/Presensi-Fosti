@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { getMahasiswa, createMahasiswa } from "../api";
+import { useState, useEffect, useCallback, useTransition } from "react";
+import { getMahasiswa, createMahasiswa, deleteMahasiswa } from "../api";
 
 export default function Mahasiswa() {
     const [mahasiswa, setMahasiswa] = useState([]);
@@ -9,32 +9,31 @@ export default function Mahasiswa() {
         divisi: "RISTEK",
         uid: "",
     });
+    const [selectedId, setSelectedId] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isPending, startTransition] = useTransition();
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [error, setError] = useState(null);
     const [serverErrors, setServerErrors] = useState({});
 
-    useEffect(() => {
-        fetchMahasiswa();
-    }, []);
-
-    const fetchMahasiswa = async () => {
+    const fetchMahasiswa = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
             const data = await getMahasiswa();
-            if (Array.isArray(data)) {
-                setMahasiswa(data);
-            } else {
-                throw new Error("Format data tidak valid dari server");
-            }
+            if (Array.isArray(data)) setMahasiswa(data);
+            else throw new Error("Format data tidak valid dari server");
         } catch (error) {
             console.error("Gagal memuat data:", error);
             setError("Gagal memuat data mahasiswa");
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchMahasiswa();
+    }, [fetchMahasiswa]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -43,65 +42,83 @@ export default function Mahasiswa() {
         setServerErrors({});
 
         try {
-            // Validasi client-side sederhana
             if (!formData.nim || !formData.nama || !formData.uid) {
                 throw new Error("Harap isi semua field yang wajib diisi");
             }
 
-            const response = await createMahasiswa(formData);
+            const method = selectedId ? "PUT" : "POST";
+            const url = selectedId ? `/mahasiswa/${selectedId}` : "/mahasiswa";
 
-            // Jika berhasil
-            await fetchMahasiswa();
+            const response = await createMahasiswa(formData, method, url);
+
+            startTransition(() => {
+                fetchMahasiswa();
+            });
+
             setIsSubmitted(true);
             setFormData({ nama: "", nim: "", divisi: "RISTEK", uid: "" });
+            setSelectedId(null);
             setTimeout(() => setIsSubmitted(false), 3000);
         } catch (error) {
             console.error("Gagal menyimpan data:", error);
-
-            // Tangani error response dari server
-            if (error.response) {
-                // Error validasi dari server (422)
-                if (
-                    error.response.status === 422 &&
-                    error.response.data.errors
-                ) {
-                    setServerErrors(error.response.data.errors);
-                }
-                // Error lainnya
-                else {
-                    setError(
-                        error.response.data.message ||
-                            "Terjadi kesalahan server"
-                    );
-                }
-            }
-            // Error network atau lainnya
-            else {
-                setError(error.message || "Terjadi kesalahan");
+            if (
+                error.response &&
+                error.response.status === 422 &&
+                error.response.data.errors
+            ) {
+                setServerErrors(error.response.data.errors);
+            } else {
+                setError(
+                    error.response?.data?.message ||
+                        error.message ||
+                        "Terjadi kesalahan"
+                );
             }
         } finally {
             setLoading(false);
         }
     };
 
+    const handleEdit = useCallback((mhs) => {
+        setFormData({
+            nama: mhs.nama ?? "",
+            nim: mhs.nim ?? "",
+            divisi: mhs.divisi ?? "RISTEK",
+            uid: mhs.kartu?.uid ?? "",
+        });
+        setSelectedId(mhs._id || mhs.id);
+    }, []);
+
+    const handleDelete = useCallback(
+        async (id) => {
+            if (!confirm("Yakin ingin menghapus data ini?")) return;
+            setLoading(true);
+            try {
+                await deleteMahasiswa(id);
+                startTransition(() => {
+                    fetchMahasiswa();
+                });
+            } catch (error) {
+                console.error("Gagal menghapus data:", error);
+                setError("Gagal menghapus data mahasiswa");
+            } finally {
+                setLoading(false);
+            }
+        },
+        [fetchMahasiswa]
+    );
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-
-        // Clear error ketika user mulai mengetik
-        if (serverErrors[name]) {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        if (serverErrors[name])
             setServerErrors((prev) => ({ ...prev, [name]: undefined }));
-        }
     };
 
     return (
         <div>
             <h1 className="text-2xl font-bold mb-6">Manajemen Mahasiswa</h1>
 
-            {/* Tampilkan pesan error utama */}
             {error && (
                 <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
                     {error}
@@ -117,7 +134,6 @@ export default function Mahasiswa() {
                 </div>
             )}
 
-            {/* Tampilkan pesan sukses */}
             {isSubmitted && (
                 <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
                     Data mahasiswa berhasil disimpan!
@@ -129,11 +145,10 @@ export default function Mahasiswa() {
                 className="mb-8 p-4 bg-gray-50 rounded"
             >
                 <h2 className="text-xl font-semibold mb-4">
-                    Tambah Mahasiswa Baru
+                    {selectedId ? "Edit Mahasiswa" : "Tambah Mahasiswa Baru"}
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Field Nama */}
                     <div>
                         <label className="block text-gray-700 mb-1">
                             Nama*
@@ -155,7 +170,6 @@ export default function Mahasiswa() {
                         )}
                     </div>
 
-                    {/* Field NIM */}
                     <div>
                         <label className="block text-gray-700 mb-1">NIM*</label>
                         <input
@@ -175,7 +189,6 @@ export default function Mahasiswa() {
                         )}
                     </div>
 
-                    {/* Field Divisi */}
                     <div>
                         <label className="block text-gray-700 mb-1">
                             Divisi*
@@ -200,7 +213,6 @@ export default function Mahasiswa() {
                         )}
                     </div>
 
-                    {/* Field UID */}
                     <div>
                         <label className="block text-gray-700 mb-1">
                             UID Kartu RFID*
@@ -225,14 +237,17 @@ export default function Mahasiswa() {
 
                 <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || isPending}
                     className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
                 >
-                    {loading ? "Menyimpan..." : "Simpan Mahasiswa"}
+                    {loading
+                        ? "Menyimpan..."
+                        : selectedId
+                        ? "Update Mahasiswa"
+                        : "Simpan Mahasiswa"}
                 </button>
             </form>
 
-            {/* Daftar Mahasiswa */}
             <div>
                 <h2 className="text-xl font-semibold mb-4">Daftar Mahasiswa</h2>
                 {loading ? (
@@ -250,12 +265,13 @@ export default function Mahasiswa() {
                                     <th className="py-2 px-4 border">NIM</th>
                                     <th className="py-2 px-4 border">Divisi</th>
                                     <th className="py-2 px-4 border">UID</th>
+                                    <th className="py-2 px-4 border">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {mahasiswa.map((mhs) => (
                                     <tr
-                                        key={mhs.id}
+                                        key={mhs.id || mhs._id}
                                         className="hover:bg-gray-50"
                                     >
                                         <td className="py-2 px-4 border">
@@ -268,7 +284,25 @@ export default function Mahasiswa() {
                                             {mhs.divisi}
                                         </td>
                                         <td className="py-2 px-4 border">
-                                            {mhs.uid}
+                                            {mhs.kartu?.uid}
+                                        </td>
+                                        <td className="py-2 px-4 border space-x-2">
+                                            <button
+                                                onClick={() => handleEdit(mhs)}
+                                                className="text-blue-600 hover:underline"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    handleDelete(
+                                                        mhs._id || mhs.id
+                                                    )
+                                                }
+                                                className="text-red-600 hover:underline"
+                                            >
+                                                Hapus
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
