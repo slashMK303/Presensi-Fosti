@@ -57,39 +57,20 @@ export default function Presensi() {
         }
     };
 
-    const handleKeyDown = useCallback(
-        (e) => {
-            if (e.key === "Enter") {
-                // Prevent form submission if it's implicitly part of a form
-                e.preventDefault();
-                // Determine action based on current UI context or add specific buttons
-                // For simplicity, let's say Enter always triggers 'masuk' or you have separate fields
-                // Here, we'll assume there are explicit buttons for masuk/keluar, or you'll need
-                // to add logic to differentiate. For now, let's just focus input.
-                // If you want Enter to trigger presensi, uncomment one of these:
-                // handlePresensi("masuk");
-                // handlePresensi("keluar");
-                // Or simply move focus if it's for scanning
-                if (uidInputRef.current) {
-                    uidInputRef.current.focus();
-                }
+    const handleKeyDown = useCallback((e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (uidInputRef.current) {
+                uidInputRef.current.focus();
             }
-        },
-        [] // No dependencies if only focusing, but if triggering presensi, add handlePresensi
-    );
+        }
+    }, []);
 
     useEffect(() => {
         // Focus input on component mount
         if (uidInputRef.current) {
             uidInputRef.current.focus();
         }
-
-        // Add event listener for global keydown if needed, but typically
-        // we'd attach it directly to the input for better control.
-        // document.addEventListener('keydown', handleKeyDown);
-        // return () => {
-        //   document.removeEventListener('keydown', handleKeyDown);
-        // };
     }, []);
 
     return (
