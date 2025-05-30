@@ -1,5 +1,8 @@
+// Mahasiswa.jsx
 import { useState, useEffect, useCallback, useTransition } from "react";
 import { getMahasiswa, createMahasiswa, deleteMahasiswa } from "../api";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 export default function Mahasiswa() {
     const [mahasiswa, setMahasiswa] = useState([]);
@@ -115,12 +118,44 @@ export default function Mahasiswa() {
             setServerErrors((prev) => ({ ...prev, [name]: undefined }));
     };
 
+    const exportToExcel = () => {
+        const dataToExport = mahasiswa.map((mhs) => ({
+            Nama: mhs.nama,
+            NIM: mhs.nim,
+            Divisi: mhs.divisi,
+            UID: mhs.kartu?.uid,
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Mahasiswa");
+        const excelBuffer = XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "array",
+        });
+        saveAs(
+            new Blob([excelBuffer], { type: "application/octet-stream" }),
+            "data_mahasiswa.xlsx"
+        );
+    };
+
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6">Manajemen Mahasiswa</h1>
+            <h1
+                className="text-2xl font-bold mb-6"
+                style={{ color: "var(--text-color)" }}
+            >
+                Manajemen Mahasiswa
+            </h1>
 
             {error && (
-                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+                <div
+                    className="mb-4 p-3 rounded"
+                    style={{
+                        backgroundColor: "var(--error-bg)",
+                        color: "var(--error-text)",
+                    }}
+                >
                     {error}
                     <button
                         onClick={() => {
@@ -128,6 +163,7 @@ export default function Mahasiswa() {
                             setServerErrors({});
                         }}
                         className="ml-2 px-2 py-1 bg-red-500 text-white rounded text-sm"
+                        style={{ backgroundColor: "var(--error-text)" }}
                     >
                         Tutup
                     </button>
@@ -135,22 +171,38 @@ export default function Mahasiswa() {
             )}
 
             {isSubmitted && (
-                <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+                <div
+                    className="mb-4 p-3 rounded"
+                    style={{
+                        backgroundColor: "var(--success-bg)",
+                        color: "var(--success-text)",
+                    }}
+                >
                     Data mahasiswa berhasil disimpan!
                 </div>
             )}
 
             <form
                 onSubmit={handleSubmit}
-                className="mb-8 p-4 bg-gray-50 rounded"
+                className="mb-8 p-4 rounded"
+                style={{
+                    backgroundColor: "var(--card-bg)",
+                    color: "var(--text-color)",
+                }}
             >
-                <h2 className="text-xl font-semibold mb-4">
+                <h2
+                    className="text-xl font-semibold mb-4"
+                    style={{ color: "var(--text-color)" }}
+                >
                     {selectedId ? "Edit Mahasiswa" : "Tambah Mahasiswa Baru"}
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-gray-700 mb-1">
+                        <label
+                            className="block mb-1"
+                            style={{ color: "var(--text-color)" }}
+                        >
                             Nama*
                         </label>
                         <input
@@ -161,17 +213,30 @@ export default function Mahasiswa() {
                             className={`w-full px-3 py-2 border rounded ${
                                 serverErrors.nama ? "border-red-500" : ""
                             }`}
+                            style={{
+                                borderColor: "var(--border-color)",
+                                backgroundColor: "var(--background-color)",
+                                color: "var(--text-color)",
+                            }}
                             required
                         />
                         {serverErrors.nama && (
-                            <p className="text-red-500 text-sm mt-1">
+                            <p
+                                className="text-red-500 text-sm mt-1"
+                                style={{ color: "var(--error-text)" }}
+                            >
                                 {serverErrors.nama}
                             </p>
                         )}
                     </div>
 
                     <div>
-                        <label className="block text-gray-700 mb-1">NIM*</label>
+                        <label
+                            className="block mb-1"
+                            style={{ color: "var(--text-color)" }}
+                        >
+                            NIM*
+                        </label>
                         <input
                             type="text"
                             name="nim"
@@ -180,17 +245,28 @@ export default function Mahasiswa() {
                             className={`w-full px-3 py-2 border rounded ${
                                 serverErrors.nim ? "border-red-500" : ""
                             }`}
+                            style={{
+                                borderColor: "var(--border-color)",
+                                backgroundColor: "var(--background-color)",
+                                color: "var(--text-color)",
+                            }}
                             required
                         />
                         {serverErrors.nim && (
-                            <p className="text-red-500 text-sm mt-1">
+                            <p
+                                className="text-red-500 text-sm mt-1"
+                                style={{ color: "var(--error-text)" }}
+                            >
                                 {serverErrors.nim}
                             </p>
                         )}
                     </div>
 
                     <div>
-                        <label className="block text-gray-700 mb-1">
+                        <label
+                            className="block mb-1"
+                            style={{ color: "var(--text-color)" }}
+                        >
                             Divisi*
                         </label>
                         <select
@@ -200,6 +276,11 @@ export default function Mahasiswa() {
                             className={`w-full px-3 py-2 border rounded ${
                                 serverErrors.divisi ? "border-red-500" : ""
                             }`}
+                            style={{
+                                borderColor: "var(--border-color)",
+                                backgroundColor: "var(--background-color)",
+                                color: "var(--text-color)",
+                            }}
                             required
                         >
                             <option value="RISTEK">RISTEK</option>
@@ -207,14 +288,20 @@ export default function Mahasiswa() {
                             <option value="KEOR">KEOR</option>
                         </select>
                         {serverErrors.divisi && (
-                            <p className="text-red-500 text-sm mt-1">
+                            <p
+                                className="text-red-500 text-sm mt-1"
+                                style={{ color: "var(--error-text)" }}
+                            >
                                 {serverErrors.divisi}
                             </p>
                         )}
                     </div>
 
                     <div>
-                        <label className="block text-gray-700 mb-1">
+                        <label
+                            className="block mb-1"
+                            style={{ color: "var(--text-color)" }}
+                        >
                             UID Kartu RFID*
                         </label>
                         <input
@@ -225,10 +312,18 @@ export default function Mahasiswa() {
                             className={`w-full px-3 py-2 border rounded ${
                                 serverErrors.uid ? "border-red-500" : ""
                             }`}
+                            style={{
+                                borderColor: "var(--border-color)",
+                                backgroundColor: "var(--background-color)",
+                                color: "var(--text-color)",
+                            }}
                             required
                         />
                         {serverErrors.uid && (
-                            <p className="text-red-500 text-sm mt-1">
+                            <p
+                                className="text-red-500 text-sm mt-1"
+                                style={{ color: "var(--error-text)" }}
+                            >
                                 {serverErrors.uid}
                             </p>
                         )}
@@ -238,7 +333,11 @@ export default function Mahasiswa() {
                 <button
                     type="submit"
                     disabled={loading || isPending}
-                    className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+                    className="mt-4 px-4 py-2 rounded disabled:opacity-50"
+                    style={{
+                        backgroundColor: "var(--button-primary-bg)",
+                        color: "white",
+                    }}
                 >
                     {loading
                         ? "Menyimpan..."
@@ -249,47 +348,161 @@ export default function Mahasiswa() {
             </form>
 
             <div>
-                <h2 className="text-xl font-semibold mb-4">Daftar Mahasiswa</h2>
+                <h2
+                    className="text-xl font-semibold mb-4"
+                    style={{ color: "var(--text-color)" }}
+                >
+                    Daftar Mahasiswa
+                </h2>
+                <button
+                    onClick={exportToExcel}
+                    className="mb-4 px-4 py-2 rounded"
+                    style={{
+                        backgroundColor: "var(--button-primary-bg)",
+                        color: "white",
+                    }}
+                    disabled={mahasiswa.length === 0}
+                >
+                    Export ke Excel
+                </button>
                 {loading ? (
-                    <p>Memuat data...</p>
+                    <p style={{ color: "var(--text-color)" }}>Memuat data...</p>
                 ) : error ? (
-                    <div className="text-red-500">{error}</div>
+                    <div
+                        className="text-red-500"
+                        style={{ color: "var(--error-text)" }}
+                    >
+                        {error}
+                    </div>
                 ) : mahasiswa.length === 0 ? (
-                    <p>Tidak ada data mahasiswa</p>
+                    <p style={{ color: "var(--text-color)" }}>
+                        Tidak ada data mahasiswa
+                    </p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full bg-white border">
+                    <div
+                        className="overflow-x-auto"
+                        style={{ border: `1px solid var(--border-color)` }}
+                    >
+                        <table
+                            className="min-w-full border"
+                            style={{
+                                backgroundColor: "var(--background-color)",
+                                color: "var(--text-color)",
+                            }}
+                        >
                             <thead>
-                                <tr className="bg-gray-100">
-                                    <th className="py-2 px-4 border">Nama</th>
-                                    <th className="py-2 px-4 border">NIM</th>
-                                    <th className="py-2 px-4 border">Divisi</th>
-                                    <th className="py-2 px-4 border">UID</th>
-                                    <th className="py-2 px-4 border">Aksi</th>
+                                <tr
+                                    style={{
+                                        backgroundColor: "var(--card-bg)",
+                                    }}
+                                >
+                                    <th
+                                        className="py-2 px-4 border"
+                                        style={{
+                                            borderColor: "var(--border-color)",
+                                        }}
+                                    >
+                                        Nama
+                                    </th>
+                                    <th
+                                        className="py-2 px-4 border"
+                                        style={{
+                                            borderColor: "var(--border-color)",
+                                        }}
+                                    >
+                                        NIM
+                                    </th>
+                                    <th
+                                        className="py-2 px-4 border"
+                                        style={{
+                                            borderColor: "var(--border-color)",
+                                        }}
+                                    >
+                                        Divisi
+                                    </th>
+                                    <th
+                                        className="py-2 px-4 border"
+                                        style={{
+                                            borderColor: "var(--border-color)",
+                                        }}
+                                    >
+                                        UID
+                                    </th>
+                                    <th
+                                        className="py-2 px-4 border"
+                                        style={{
+                                            borderColor: "var(--border-color)",
+                                        }}
+                                    >
+                                        Aksi
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {mahasiswa.map((mhs) => (
                                     <tr
                                         key={mhs.id || mhs._id}
-                                        className="hover:bg-gray-50"
+                                        style={{
+                                            borderBottom: `1px solid var(--border-color)`,
+                                        }}
+                                        onMouseEnter={(e) =>
+                                            (e.currentTarget.style.backgroundColor =
+                                                "var(--hover-bg)")
+                                        }
+                                        onMouseLeave={(e) =>
+                                            (e.currentTarget.style.backgroundColor =
+                                                "var(--background-color)")
+                                        }
                                     >
-                                        <td className="py-2 px-4 border">
+                                        <td
+                                            className="py-2 px-4 border"
+                                            style={{
+                                                borderColor:
+                                                    "var(--border-color)",
+                                            }}
+                                        >
                                             {mhs.nama}
                                         </td>
-                                        <td className="py-2 px-4 border">
+                                        <td
+                                            className="py-2 px-4 border"
+                                            style={{
+                                                borderColor:
+                                                    "var(--border-color)",
+                                            }}
+                                        >
                                             {mhs.nim}
                                         </td>
-                                        <td className="py-2 px-4 border">
+                                        <td
+                                            className="py-2 px-4 border"
+                                            style={{
+                                                borderColor:
+                                                    "var(--border-color)",
+                                            }}
+                                        >
                                             {mhs.divisi}
                                         </td>
-                                        <td className="py-2 px-4 border">
+                                        <td
+                                            className="py-2 px-4 border"
+                                            style={{
+                                                borderColor:
+                                                    "var(--border-color)",
+                                            }}
+                                        >
                                             {mhs.kartu?.uid}
                                         </td>
-                                        <td className="py-2 px-4 border space-x-2">
+                                        <td
+                                            className="py-2 px-4 border space-x-2"
+                                            style={{
+                                                borderColor:
+                                                    "var(--border-color)",
+                                            }}
+                                        >
                                             <button
                                                 onClick={() => handleEdit(mhs)}
-                                                className="text-blue-600 hover:underline"
+                                                style={{
+                                                    color: "var(--button-primary-bg)",
+                                                    textDecoration: "underline",
+                                                }}
                                             >
                                                 Edit
                                             </button>
@@ -299,7 +512,10 @@ export default function Mahasiswa() {
                                                         mhs._id || mhs.id
                                                     )
                                                 }
-                                                className="text-red-600 hover:underline"
+                                                style={{
+                                                    color: "var(--error-text)",
+                                                    textDecoration: "underline",
+                                                }}
                                             >
                                                 Hapus
                                             </button>

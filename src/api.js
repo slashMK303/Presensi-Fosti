@@ -3,16 +3,19 @@ import axios from 'axios';
 const API_BASE_URL = 'https://fostipresensiapi.vercel.app/api';
 
 export const getMahasiswa = async (divisi) => {
-
     try {
-        const response = await axios.get(`${API_BASE_URL}/mahasiswa`, { divisi });
+        const response = await axios.get(`${API_BASE_URL}/mahasiswa`, {
+            params: { divisi } // Correctly pass divisi as a query parameter
+        });
 
         if (response.data && Array.isArray(response.data.data)) {
             return response.data.data;
         }
+        console.error('Format data mahasiswa tidak valid:', response.data);
+        return [];
     } catch (error) {
-        console.error('Error fetching mahasiswa:', error.response || error);
-        return []; // Selalu return array meskipun error
+        console.error('Error fetching mahasiswa:', error.response?.data || error.message || error);
+        return [];
     }
 };
 
@@ -36,50 +39,66 @@ export const createMahasiswa = async (data, method = "POST", url = "/mahasiswa")
 
         return response.data;
     } catch (error) {
-        console.error('Error creating/updating mahasiswa:', error);
+        console.error('Error creating/updating mahasiswa:', error.response?.data || error.message || error);
         throw error;
     }
 };
 
 export const deleteMahasiswa = async (id) => {
-    return await axios.delete(`${API_BASE_URL}/mahasiswa/${id}`);
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/mahasiswa/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting mahasiswa:', error.response?.data || error.message || error);
+        throw error;
+    }
 };
-
 
 export const getEvents = async () => {
     try {
         const response = await axios.get(`${API_BASE_URL}/event`);
-
-        // Ekstrak array events dari response.data.data
         if (response.data && Array.isArray(response.data.data)) {
             return response.data.data;
         }
-        console.error('Format data tidak valid:', response.data);
+        console.error('Format data events tidak valid:', response.data);
         return [];
     } catch (error) {
-        console.error('Error fetching events:', error.response || error);
+        console.error('Error fetching events:', error.response?.data || error.message || error);
         return [];
     }
 };
 
-// api.js
+export const getEventById = async (id) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/event/${id}`);
+        // The Postman example shows "data" nested inside the main response object
+        if (response.data && response.data.data) {
+            return response.data; // Return the full response.data which contains 'data' property
+        }
+        throw new Error("Event data not found or invalid format.");
+    } catch (error) {
+        console.error(`Error fetching event by ID ${id}:`, error.response?.data || error.message || error);
+        throw error;
+    }
+};
+
 export const createEvent = async (eventData) => {
-    const response = await axios.post(`${API_BASE_URL}/event`, eventData);
-    return response.data; // Pastikan mengandung _id
+    try {
+        const response = await axios.post(`${API_BASE_URL}/event`, eventData);
+        return response.data;
+    } catch (error) {
+        console.error('Error creating event:', error.response?.data || error.message || error);
+        throw error;
+    }
 };
 
 export const updateEvent = async (id, eventData) => {
     try {
         const response = await axios.put(`${API_BASE_URL}/event/${id}`, eventData);
-        return {
-            _id: id,
-            judul: response.data.judul || eventData.judul,
-            deskripsi: response.data.deskripsi || eventData.deskripsi,
-            lokasi: response.data.lokasi || eventData.lokasi,
-            tanggal: response.data.tanggal || eventData.tanggal,
-        };
+        // Assuming your backend returns the updated event directly, or we can use eventData
+        return response.data;
     } catch (error) {
-        console.error('Error updating event:', error);
+        console.error('Error updating event:', error.response?.data || error.message || error);
         throw error;
     }
 };
@@ -87,9 +106,9 @@ export const updateEvent = async (id, eventData) => {
 export const deleteEvent = async (id) => {
     try {
         const response = await axios.delete(`${API_BASE_URL}/event/${id}`);
-        return response.data; // Pastikan mengembalikan konfirmasi sukses
+        return response.data;
     } catch (error) {
-        console.error('Error deleting event:', error);
+        console.error('Error deleting event:', error.response?.data || error.message || error);
         throw error;
     }
 };
@@ -99,7 +118,7 @@ export const presensiMasuk = async (uid) => {
         const response = await axios.post(`${API_BASE_URL}/log/masuk`, { uid });
         return response.data;
     } catch (error) {
-        console.error('Error presensi masuk:', error);
+        console.error('Error presensi masuk:', error.response?.data || error.message || error);
         throw error;
     }
 };
@@ -109,7 +128,7 @@ export const presensiKeluar = async (uid) => {
         const response = await axios.post(`${API_BASE_URL}/log/keluar`, { uid });
         return response.data;
     } catch (error) {
-        console.error('Error presensi keluar:', error);
+        console.error('Error presensi keluar:', error.response?.data || error.message || error);
         throw error;
     }
 };

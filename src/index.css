@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+/* index.css */
+
+/* Tema Terang (default) */
+:root {
+    --background-color: #ffffff; /* Putih */
+    --text-color: #1a202c; /* Abu-abu gelap */
+    --navbar-bg: #4ade80; /* Hijau terang */
+    --card-bg: #f7fafc; /* Abu-abu sangat terang */
+    --border-color: #e2e8f0; /* Abu-abu muda */
+    --hover-bg: #edf2f7; /* Abu-abu sangat muda */
+    --button-primary-bg: #3b82f6; /* Biru */
+    --button-primary-hover-bg: #2563eb; /* Biru gelap */
+    --button-secondary-bg: #a0aec0; /* Abu-abu sedang */
+    --button-secondary-hover-bg: #718096; /* Abu-abu tua */
+    --success-bg: #d1fae5; /* Hijau muda */
+    --success-text: #065f46; /* Hijau gelap */
+    --error-bg: #fee2e2; /* Merah muda */
+    --error-text: #991b1b; /* Merah gelap */
+    --purple-text: #8b5cf6; /* Ungu */
+}
+
+/* Tema Gelap */
+body.dark-mode {
+    --background-color: #1f2937; /* Abu-abu gelap */
+    --text-color: #e5e7eb; /* Abu-abu terang */
+    --navbar-bg: #10b981; /* Hijau gelap */
+    --card-bg: #374151; /* Abu-abu sedang gelap */
+    --border-color: #4b5563; /* Abu-abu agak gelap */
+    --hover-bg: #4a5568; /* Abu-abu sedikit lebih gelap */
+    --button-primary-bg: #60a5fa; /* Biru terang */
+    --button-primary-hover-bg: #3b82f6; /* Biru */
+    --button-secondary-bg: #6b7280; /* Abu-abu lebih gelap */
+    --button-secondary-hover-bg: #4b5563; /* Abu-abu sangat gelap */
+    --success-bg: #064e3b; /* Hijau sangat gelap */
+    --success-text: #6ee7b7; /* Hijau pucat */
+    --error-bg: #7f1d1d; /* Merah sangat gelap */
+    --error-text: #fca5a5; /* Merah pucat */
+    --purple-text: #a78bfa; /* Ungu terang */
+}
+
+/* Transisi halus untuk semua properti yang berubah */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Terapkan variabel CSS ke elemen HTML */
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
